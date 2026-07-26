@@ -1,7 +1,10 @@
 name: Rust CI
 
 on:
+  # Restricted to the default branch so that a push to a branch with an open
+  # pull request does not run this workflow twice.
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
