@@ -1,0 +1,11 @@
+//! One-dimensional semiconductor drift-diffusion solver.
+//!
+//! The crate currently contains the first numerical primitive and the domain
+//! definition needed to grow the solver incrementally.
+
+#![forbid(unsafe_code)]
+
+pub mod numerics;
+pub mod problem;
+
+pub use problem::{Problem1D, ProblemError};

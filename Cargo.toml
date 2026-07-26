@@ -1,0 +1,15 @@
+[package]
+name = "drift-diffusion-1d"
+version = "0.1.0"
+edition = "2024"
+description = "A one-dimensional semiconductor drift-diffusion solver"
+
+[lib]
+name = "drift_diffusion_1d"
+path = "src/lib.rs"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"
