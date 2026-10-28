@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'glimmer/**'
+      - '!glimmer/**/*.md'
       - '.github/workflows/glimmer.yml'
   workflow_dispatch:
 

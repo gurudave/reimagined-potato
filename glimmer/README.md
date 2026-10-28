@@ -52,9 +52,15 @@ builds a working APK but warns that it is signed with a throwaway key.
 
 Updates install the same way, straight over the old version, and her widgets stay put.
 
-The **glimmer-screenshots** artifact from the same run shows the app on an emulator,
-including widgets placed on a real launcher, which is handy for checking a change before
-handing it over.
+## Checking a change before handing it over
+
+Every push that touches `glimmer/` (other than Markdown) builds the APK, then installs a
+"preview" build on an Android emulator. A demo activity in `app/src/preview/` makes sample
+photos and pins four widgets through the launcher's real "add to home screen" dialog. The
+run then taps one of them and walks through the app in a few colour themes. The
+**glimmer-screenshots** artifact holds the screenshots, a contact sheet of every frame and
+filter, and the emulator's logcat. The **Screenshots as text** job prints the same pictures
+as base64 JPEGs, for tools that can read job logs but cannot download artifacts.
 
 ## How it works
 
