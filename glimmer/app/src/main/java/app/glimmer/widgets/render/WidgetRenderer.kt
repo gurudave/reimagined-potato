@@ -46,7 +46,7 @@ object WidgetRenderer {
         val random = Random(7)
         val pixels = IntArray(size * size) {
             val v = if (random.nextBoolean()) 255 else 0
-            Color.argb(random.nextInt(0, 34), v, v, v)
+            Color.argb(random.nextInt(0, 21), v, v, v)
         }
         Bitmap.createBitmap(pixels, size, size, Bitmap.Config.ARGB_8888)
     }
@@ -202,7 +202,7 @@ object WidgetRenderer {
             return
         }
         paint.color = config.captionColor ?: Color.WHITE
-        paint.setShadowLayer(unit * 0.02f, 0f, unit * 0.006f, 0x77000000)
+        paint.setShadowLayer(unit * 0.03f, 0f, unit * 0.008f, 0x99000000.toInt())
         val narrow = config.shape == FrameShape.CIRCLE || config.shape == FrameShape.HEART || config.shape == FrameShape.FLOWER
         fitText(paint, text, photoRect.width() * if (narrow) 0.62f else 0.84f, unit * 0.12f)
         val baseline = when (config.shape) {

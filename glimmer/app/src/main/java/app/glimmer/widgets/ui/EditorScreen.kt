@@ -4,6 +4,9 @@ import android.graphics.RectF
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -88,6 +91,7 @@ import app.glimmer.widgets.ui.theme.LocalVibe
 import app.glimmer.widgets.ui.theme.Pacifico
 import app.glimmer.widgets.ui.theme.family
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -122,6 +126,7 @@ fun EditorScreen(
     var selected by rememberSaveable { mutableIntStateOf(initial.index.coerceAtLeast(0)) }
     var importing by remember { mutableStateOf(false) }
     var lastSave by remember { mutableLongStateOf(0L) }
+    var showFramingHint by remember { mutableStateOf(false) }
 
     val current: Int? = if (config.photos.isEmpty()) null else selected.coerceIn(0, config.photos.lastIndex)
 
@@ -167,6 +172,14 @@ fun EditorScreen(
 
     val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
 
+    // Explain the gestures briefly once there is a photo to frame, then get out of the way.
+    val hasPhotos = config.photos.isNotEmpty()
+    LaunchedEffect(hasPhotos) {
+        showFramingHint = hasPhotos
+        delay(4000)
+        showFramingHint = false
+    }
+
     Box(Modifier.fillMaxSize().background(vibe.background)) {
         SparkleField(vibe.accent, Modifier.fillMaxSize())
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
@@ -195,6 +208,7 @@ fun EditorScreen(
                     .height(280.dp)
                     .shadow(16.dp, RoundedCornerShape(36.dp), ambientColor = vibe.primary, spotColor = vibe.primary)
                     .clip(RoundedCornerShape(36.dp))
+                    .background(vibe.soft)
                     .background(Brush.linearGradient(listOf(vibe.soft, vibe.accent.copy(alpha = 0.55f), vibe.primary.copy(alpha = 0.5f))))
                     .clickable(enabled = config.photos.isEmpty() && !importing, onClick = pickPhotos),
             ) {
@@ -209,6 +223,7 @@ fun EditorScreen(
                             .pointerInput(current) {
                                 val position = current ?: return@pointerInput
                                 detectTransformGestures { _, pan, zoomChange, _ ->
+                                    showFramingHint = false
                                     val photo = config.photos.getOrNull(position) ?: return@detectTransformGestures
                                     val zoom = (photo.zoom * zoomChange).coerceIn(1f, 4f)
                                     // Convert finger movement into a shift of the photo's focus point.
@@ -239,19 +254,7 @@ fun EditorScreen(
                 if (importing) {
                     CircularProgressIndicator(color = vibe.primary, modifier = Modifier.align(Alignment.Center))
                 }
-                if (config.photos.isNotEmpty()) {
-                    Text(
-                        "pinch & drag to frame · double-tap to reset",
-                        fontSize = 11.sp,
-                        color = vibe.ink.copy(alpha = 0.7f),
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .padding(top = 8.dp)
-                            .clip(CircleShape)
-                            .background(vibe.surface.copy(alpha = 0.7f))
-                            .padding(horizontal = 10.dp, vertical = 3.dp),
-                    )
-                }
+                FramingHint(showFramingHint, Modifier.align(Alignment.TopCenter).padding(top = 8.dp))
                 if (config.photos.size > 1) {
                     Row(
                         Modifier.align(Alignment.BottomCenter).padding(bottom = 10.dp),
@@ -442,6 +445,22 @@ private fun Section(title: String, content: @Composable () -> Unit) {
     Column(Modifier.padding(top = 18.dp)) {
         SectionTitle(title, Modifier.padding(start = 24.dp, bottom = 10.dp))
         content()
+    }
+}
+
+@Composable
+private fun FramingHint(visible: Boolean, modifier: Modifier) {
+    val vibe = LocalVibe.current
+    AnimatedVisibility(visible = visible, enter = fadeIn(), exit = fadeOut(), modifier = modifier) {
+        Text(
+            "pinch & drag to frame · double-tap to reset",
+            fontSize = 11.sp,
+            color = vibe.ink.copy(alpha = 0.8f),
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(vibe.surface.copy(alpha = 0.85f))
+                .padding(horizontal = 10.dp, vertical = 3.dp),
+        )
     }
 }
 
