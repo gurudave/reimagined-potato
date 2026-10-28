@@ -67,7 +67,7 @@ if tap_text 'glimmer photo|photo widget|besties'; then
 fi
 
 echo "== Back in the app"
-adb shell am start -W -n "$PKG/.MainActivity"
+adb shell am start -W --activity-clear-task -n "$PKG/.MainActivity"
 shot 05-home-list 5
 if tap_text 'tap to edit'; then
   shot 06-editor 5

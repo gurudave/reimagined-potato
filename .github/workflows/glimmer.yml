@@ -109,3 +109,22 @@ jobs:
           path: preview-out
           if-no-files-found: warn
           retention-days: 14
+
+  # Repeats the screenshots as text in the log, for reviewers who can read logs but not artifacts.
+  encoded-previews:
+    name: Screenshots as text
+    needs: preview
+    if: always() && needs.preview.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: glimmer-screenshots
+          path: shots
+      - name: Print the screenshots
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet pillow
+          "$RUNNER_TEMP/venv/bin/python" glimmer/scripts/encode-previews.py shots

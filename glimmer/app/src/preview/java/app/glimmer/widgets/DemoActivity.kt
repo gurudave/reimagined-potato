@@ -27,6 +27,7 @@ import app.glimmer.widgets.data.WidgetStore
 import app.glimmer.widgets.render.WidgetRenderer
 import app.glimmer.widgets.widget.WidgetUpdater
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -53,6 +54,9 @@ class DemoActivity : ComponentActivity() {
                 "pin" -> {
                     val ok = WidgetUpdater.requestPin(this@DemoActivity, design(intent.getIntExtra("style", 0), photos))
                     Log.i(TAG, "requestPin -> $ok")
+                    // Stay up long enough for the launcher to show its dialog, then get out of the way.
+                    delay(1500)
+                    finish()
                 }
                 "edit" -> {
                     WidgetStore.save(this@DemoActivity, DEMO_ID, design(1, photos))
