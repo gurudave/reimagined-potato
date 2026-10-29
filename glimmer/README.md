@@ -26,10 +26,14 @@ key to sign every build with. Do this before the first install, or the first upd
 need an uninstall (which loses her widgets). On any computer with Java:
 
 ```sh
-keytool -genkeypair -keystore glimmer.jks -alias glimmer -keyalg RSA -keysize 2048 \
-  -validity 36500 -dname "CN=Glimmer"     # choose a password when asked
+keytool -genkeypair -keystore glimmer.jks -storetype PKCS12 -alias glimmer \
+  -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=Glimmer"  # choose a password when asked
 base64 -w0 glimmer.jks > glimmer.jks.txt  # macOS: base64 -i glimmer.jks -o glimmer.jks.txt
 ```
+
+`-storetype PKCS12` keeps older Java (version 8) from using its legacy JKS format. If you
+made the key without it and keytool suggested migrating to PKCS12, run the command it
+shows: the key stays the same, but encode the converted file and use that for the secret.
 
 Then in GitHub: repository **Settings → Secrets and variables → Actions → New repository
 secret**, twice:
