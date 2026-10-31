@@ -6,6 +6,8 @@ plugins {
 
 // CI stamps each build with its run number so a newer APK always installs over an older one.
 val buildNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+// A tagged release names itself after the tag (v1.2.0 → 1.2.0); other builds use the run number.
+val buildVersionName = System.getenv("DJUNGLESKWIDGETS_VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "1.0.$buildNumber"
 
 // The family signing key comes from CI secrets, never from the repository.
 val familyKeystore = System.getenv("GLIMMER_KEYSTORE_FILE")?.let { file(it) }?.takeIf { it.isFile }
@@ -19,7 +21,7 @@ android {
         minSdk = 28
         targetSdk = 35
         versionCode = buildNumber
-        versionName = "1.0.$buildNumber"
+        versionName = buildVersionName
     }
 
     signingConfigs {

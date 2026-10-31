@@ -54,13 +54,32 @@ would stop phones that already have it from updating in place, or lose what is o
   which hold her saved designs and the shuffle schedule
 - the signing key file, alias and `GLIMMER_*` secrets above, so CI keeps using the same key
 
+## Publishing a release
+
+Push a version tag and CI does the rest:
+
+```sh
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+The tagged build gets version name `1.1.0`, and once it is green a **Djungleskwidgets v1.1.0**
+release appears on the repository's **Releases** page with `djungleskwidgets-1.1.0.apk` (and
+its SHA-256 checksum) attached and notes drawn from the merged pull requests. Tags must start
+with `v` and a digit. A tagged build refuses to run without the signing key above, since a
+release signed with a throwaway key could not update her phone. If a release run fails part
+way, re-run it from the Actions tab: it refreshes the files on the existing release.
+
 ## Installing it on her phone
 
-1. Open the repository's **Actions** tab → **Djungleskwidgets Android** → the latest green run.
-2. Download the **djungleskwidgets-apk** artifact (a zip) and unzip it to get `djungleskwidgets-1.0.N.apk`.
-3. Get the APK onto the phone (Google Drive, a USB cable, Nearby Share, email to herself).
-4. Tap it. Android will ask to allow installs from that app (Files, Drive, …); allow it once.
-5. Open **Djungleskwidgets**, tap **✚ new widget**, design away, then **add to home screen ✧**.
+1. Open the repository's **Releases** page and, under the latest release, download
+   `djungleskwidgets-X.Y.Z.apk`. (Untagged test builds live under **Actions** →
+   **Djungleskwidgets Android** → a green run → the **djungleskwidgets-apk** artifact, a zip
+   holding `djungleskwidgets-1.0.N.apk`.)
+2. Get the APK onto the phone (Google Drive, a USB cable, Nearby Share, email to herself).
+   Better still, open the Releases page in the phone's own browser and download it there.
+3. Tap it. Android will ask to allow installs from that app (Files, Drive, …); allow it once.
+4. Open **Djungleskwidgets**, tap **✚ new widget**, design away, then **add to home screen ✧**.
 
 Updates install the same way, straight over the old version, and her widgets stay put.
 
