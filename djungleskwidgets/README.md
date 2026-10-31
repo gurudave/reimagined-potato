@@ -7,15 +7,33 @@ CI fails the build if that ever changes.
 ## What it does
 
 - **Seven frames:** soft square, circle, arch, heart, flower, polaroid, postage stamp
-- **Seven filters:** original, dreamy, vintage, golden hour, frost, noir, pop
-- **Captions** in five fonts, outline and paper colours
+- **Nine filters:** original, dreamy, vintage, golden hour, frost, noir, pop, vhs, faded
+- **Captions** in seven fonts (including a VCR on-screen display and an arcade high-score
+  table), outline and paper colours
+- **Camcorder stamp:** "PLAY ▶" in one corner and the time and date the photo was taken
+  in the other, read from the photo's camera data, like a frame of an old home video
 - **Tilt, film grain and soft shadow** for the finishing touch
 - **Opacity** from fully solid down to a ghostly 20%, so the wallpaper can show through
 - **Pinch and drag** on the preview to frame each photo; double-tap to reset
 - **Several photos per widget:** tap the widget to flip to the next one, or let it
   shuffle by itself every 15 minutes, hourly, every 6 hours or daily
-- **Six app "vibes":** strawberry milk, matcha latte, lavender haze, cloud nine, butter, midnight
+- **Six channels** to flip between for the app's look: arcade, high score, roller rink,
+  camcorder, sunday drive and record shop
 - **🎲 surprise** button that rolls a random look
+
+### The retro look
+
+The app looks like an evening spent between an arcade and a VCR: pixel lettering
+([VT323](https://fonts.google.com/specimen/VT323) for the on-screen display,
+[Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P) for the arcade lettering),
+chunky square buttons that sink into a hard shadow when pressed, cabinet stripes, CRT
+scanlines, tape grain and a tracking band that rolls slowly down the screen. The design
+preview is a camcorder viewfinder with a live clock. The mood board it was drawn from is in
+[`design/retro/`](../design/retro/) at the root of the repository.
+
+Anyone who had picked one of the old pastel vibes lands on the nearest channel: strawberry
+milk → roller rink, matcha latte → sunday drive, lavender haze → high score, cloud nine →
+camcorder, butter → record shop, midnight → arcade.
 
 Widgets resize freely, and every widget remembers its own design. On Android 12 and later,
 long-pressing a widget offers to reconfigure it.

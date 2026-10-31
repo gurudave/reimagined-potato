@@ -1,6 +1,6 @@
 <resources>
-    <style name="Theme.Djungleskwidgets" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@color/djungleskwidgets_blush</item>
+    <style name="Theme.Djungleskwidgets" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/djungleskwidgets_backdrop</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>

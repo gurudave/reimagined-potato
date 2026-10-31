@@ -35,15 +35,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -61,7 +57,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -72,7 +70,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -80,7 +77,6 @@ import androidx.compose.ui.unit.sp
 import app.glimmer.widgets.data.CaptionFont
 import app.glimmer.widgets.data.FrameShape
 import app.glimmer.widgets.data.PhotoFilter
-import app.glimmer.widgets.data.PhotoRef
 import app.glimmer.widgets.data.PhotoStore
 import app.glimmer.widgets.data.ShuffleEvery
 import app.glimmer.widgets.data.Swatches
@@ -89,7 +85,8 @@ import app.glimmer.widgets.data.WidgetConfig
 import app.glimmer.widgets.render.Shapes
 import app.glimmer.widgets.render.WidgetRenderer
 import app.glimmer.widgets.ui.theme.LocalVibe
-import app.glimmer.widgets.ui.theme.Pacifico
+import app.glimmer.widgets.ui.theme.Arcade
+import app.glimmer.widgets.ui.theme.Vcr
 import app.glimmer.widgets.ui.theme.family
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -136,10 +133,10 @@ fun EditorScreen(
         scope.launch {
             importing = true
             val room = (MAX_PHOTOS - config.photos.size).coerceAtLeast(0)
-            val names = uris.take(room).mapNotNull { PhotoStore.import(context, it) }
-            if (names.isNotEmpty()) {
+            val added = uris.take(room).mapNotNull { PhotoStore.import(context, it) }
+            if (added.isNotEmpty()) {
                 val firstNew = config.photos.size
-                config = config.copy(photos = config.photos + names.map { PhotoRef(it) })
+                config = config.copy(photos = config.photos + added)
                 selected = firstNew
             }
             importing = false
@@ -181,36 +178,43 @@ fun EditorScreen(
         showFramingHint = false
     }
 
-    Box(Modifier.fillMaxSize().background(vibe.background)) {
-        SparkleField(vibe.accent, Modifier.fillMaxSize())
+    val shadow = blockShadow()
+    Box(Modifier.fillMaxSize()) {
+        RetroBackdrop(Modifier.fillMaxSize())
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                PillChip("‹ back", selected = false, onClick = onClose)
+                RetroChip("‹ back", selected = false, onClick = onClose)
                 Text(
-                    title,
-                    fontFamily = Pacifico,
-                    fontSize = 24.sp,
+                    title.uppercase(),
+                    fontFamily = Arcade,
+                    fontSize = 10.sp,
                     color = vibe.primary,
                     modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                     maxLines = 1,
                     textAlign = TextAlign.Center,
                 )
-                PillChip("🎲 surprise", selected = false, onClick = { config = config.surprise() })
+                RetroChip("🎲 surprise", selected = false, onClick = { config = config.surprise() })
             }
 
-            // The live preview, on a little stand-in wallpaper.
+            // The live preview, on a little stand-in wallpaper, seen through a camcorder's viewfinder.
+            val screen = RoundedCornerShape(22.dp)
             Box(
                 Modifier
-                    .padding(horizontal = 20.dp, vertical = 6.dp)
+                    .padding(start = 20.dp, end = 15.dp, top = 6.dp, bottom = 1.dp)
                     .fillMaxWidth()
                     .height(280.dp)
-                    .shadow(16.dp, RoundedCornerShape(36.dp), ambientColor = vibe.primary, spotColor = vibe.primary)
-                    .clip(RoundedCornerShape(36.dp))
+                    .padding(end = 5.dp, bottom = 5.dp)
+                    .drawBehind {
+                        drawRoundRect(shadow, Offset(5.dp.toPx(), 5.dp.toPx()), size, CornerRadius(22.dp.toPx()))
+                    }
+                    .clip(screen)
                     .background(vibe.soft)
                     .background(Brush.linearGradient(listOf(vibe.soft, vibe.accent.copy(alpha = 0.55f), vibe.primary.copy(alpha = 0.5f))))
+                    .scanlines(Color.Black.copy(alpha = 0.1f))
+                    .border(3.dp, shadow, screen)
                     .clickable(enabled = config.photos.isEmpty() && !importing, onClick = pickPhotos),
             ) {
                 preview?.let { bitmap ->
@@ -252,21 +256,30 @@ fun EditorScreen(
                             },
                     )
                 }
+                PlayMark(Modifier.align(Alignment.TopStart).padding(start = 14.dp, top = 10.dp), size = 20.sp)
+                Text("SP", style = osdStyle(20.sp), modifier = Modifier.align(Alignment.TopEnd).padding(end = 16.dp, top = 10.dp))
+                VhsClock(Modifier.align(Alignment.BottomStart).padding(start = 14.dp, bottom = 10.dp), size = 20.sp)
                 if (importing) {
-                    CircularProgressIndicator(color = vibe.primary, modifier = Modifier.align(Alignment.Center))
+                    val blink = rememberBlink(450L)
+                    Text(
+                        "LOADING",
+                        style = osdStyle(26.sp, if (blink) Color.White else Color.Transparent),
+                        modifier = Modifier.align(Alignment.Center),
+                    )
                 }
-                FramingHint(showFramingHint, Modifier.align(Alignment.TopCenter).padding(top = 8.dp))
+                FramingHint(showFramingHint, Modifier.align(Alignment.Center))
                 if (config.photos.size > 1) {
                     Row(
-                        Modifier.align(Alignment.BottomCenter).padding(bottom = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        // Along the top, between PLAY and SP, clear of the clock in the bottom corner.
+                        Modifier.align(Alignment.TopCenter).padding(top = 18.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         config.photos.indices.take(12).forEach { i ->
                             Box(
                                 Modifier
                                     .size(if (i == current) 8.dp else 6.dp)
-                                    .clip(CircleShape)
-                                    .background(if (i == current) vibe.surface else vibe.surface.copy(alpha = 0.55f)),
+                                    .background(if (i == current) Color.White else Color.White.copy(alpha = 0.5f)),
                             )
                         }
                     }
@@ -342,14 +355,14 @@ fun EditorScreen(
                     OutlinedTextField(
                         value = config.caption,
                         onValueChange = { config = config.copy(caption = it.take(28)) },
-                        placeholder = { Text("say something cute…", fontFamily = config.font.family, fontSize = 18.sp) },
+                        placeholder = { Text("type a caption…", fontFamily = config.font.family, fontSize = 18.sp) },
                         singleLine = true,
                         textStyle = TextStyle(fontFamily = config.font.family, fontSize = 20.sp, color = vibe.ink),
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
-                        shape = RoundedCornerShape(22.dp),
+                        shape = RoundedCornerShape(4.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = vibe.primary,
-                            unfocusedBorderColor = vibe.soft,
+                            unfocusedBorderColor = shadow,
                             focusedContainerColor = vibe.surface,
                             unfocusedContainerColor = vibe.surface,
                             cursorColor = vibe.primary,
@@ -366,7 +379,7 @@ fun EditorScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         items(CaptionFont.entries) { font ->
-                            PillChip(font.label, font == config.font, onClick = { config = config.copy(font = font) }, fontFamily = font.family, fontSize = 16.sp)
+                            RetroChip(font.label, font == config.font, onClick = { config = config.copy(font = font) }, fontFamily = font.family)
                         }
                     }
                     Spacer(Modifier.height(10.dp))
@@ -376,7 +389,7 @@ fun EditorScreen(
                     ) {
                         item {
                             SwatchDot(null, config.captionColor == null, "automatic colour", onClick = { config = config.copy(captionColor = null) }) {
-                                Text("auto", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = vibe.ink)
+                                Text("AUTO", fontFamily = Vcr, fontSize = 16.sp, color = vibe.ink)
                             }
                         }
                         items(Swatches) { swatch ->
@@ -390,13 +403,23 @@ fun EditorScreen(
                 }
 
                 Section("opacity · ${(config.opacity * 100).roundToInt()}%") {
-                    OpacitySlider(config.opacity) { config = config.copy(opacity = it) }
+                    SegmentBar(
+                        value = config.opacity,
+                        min = WidgetConfig.MIN_OPACITY,
+                        steps = ((1f - WidgetConfig.MIN_OPACITY) * 20).roundToInt() + 1,
+                        label = "opacity",
+                        onChange = { config = config.copy(opacity = (it * 20).roundToInt() / 20f) },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                    )
                     Hint(opacityHint(config.opacity))
                 }
 
                 Section("finishing touches") {
                     ToggleRow("film grain", "a soft analogue texture", config.grain) { config = config.copy(grain = it) }
                     ToggleRow("soft shadow", "lifts it off your wallpaper", config.shadow) { config = config.copy(shadow = it) }
+                    ToggleRow("camcorder stamp", "PLAY and the day it was shot, like a home video", config.camcorder) {
+                        config = config.copy(camcorder = it)
+                    }
                 }
 
                 Section("shuffle photos") {
@@ -441,47 +464,24 @@ private fun opacityHint(opacity: Float) = when {
     else -> "ghostly, more wallpaper than widget"
 }
 
-/** 20% to 100% in 5% steps; the preview above sits on a stand-in wallpaper to judge it by. */
-@Composable
-private fun OpacitySlider(opacity: Float, onChange: (Float) -> Unit) {
-    val vibe = LocalVibe.current
-    val min = WidgetConfig.MIN_OPACITY
-    Slider(
-        value = opacity.coerceIn(min, 1f),
-        onValueChange = { onChange((it * 20).roundToInt() / 20f) },
-        valueRange = min..1f,
-        steps = ((1f - min) * 20).roundToInt() - 1,
-        colors = SliderDefaults.colors(
-            thumbColor = vibe.primary,
-            activeTrackColor = vibe.primary,
-            inactiveTrackColor = vibe.soft,
-            activeTickColor = vibe.onPrimary.copy(alpha = 0.5f),
-            inactiveTickColor = vibe.primary.copy(alpha = 0.35f),
-        ),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-    )
-}
-
 @Composable
 private fun Section(title: String, content: @Composable () -> Unit) {
     Column(Modifier.padding(top = 18.dp)) {
-        SectionTitle(title, Modifier.padding(start = 24.dp, bottom = 10.dp))
+        SectionTitle(title, Modifier.padding(start = 22.dp, bottom = 8.dp))
         content()
     }
 }
 
 @Composable
 private fun FramingHint(visible: Boolean, modifier: Modifier) {
-    val vibe = LocalVibe.current
     AnimatedVisibility(visible = visible, enter = fadeIn(), exit = fadeOut(), modifier = modifier) {
         Text(
-            "pinch & drag to frame · double-tap to reset",
-            fontSize = 11.sp,
-            color = vibe.ink.copy(alpha = 0.8f),
+            "PINCH & DRAG TO FRAME\nDOUBLE-TAP TO RESET",
+            style = osdStyle(19.sp),
+            textAlign = TextAlign.Center,
             modifier = Modifier
-                .clip(CircleShape)
-                .background(vibe.surface.copy(alpha = 0.85f))
-                .padding(horizontal = 10.dp, vertical = 3.dp),
+                .background(Color.Black.copy(alpha = 0.6f))
+                .padding(horizontal = 10.dp, vertical = 4.dp),
         )
     }
 }
@@ -490,27 +490,20 @@ private fun FramingHint(visible: Boolean, modifier: Modifier) {
 private fun Hint(text: String) {
     Text(
         text,
-        fontSize = 12.sp,
-        color = LocalVibe.current.ink.copy(alpha = 0.55f),
-        modifier = Modifier.padding(start = 24.dp, top = 8.dp),
+        fontFamily = Vcr,
+        fontSize = 18.sp,
+        color = LocalVibe.current.ink.copy(alpha = 0.6f),
+        modifier = Modifier.padding(start = 22.dp, top = 6.dp),
     )
 }
 
 @Composable
 private fun AddPhotoTile(onClick: () -> Unit) {
     val vibe = LocalVibe.current
-    Box(
-        Modifier
-            .padding(top = 6.dp)
-            .size(70.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(vibe.soft)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
+    RetroBlock(Modifier.padding(top = 6.dp).size(74.dp), fill = vibe.soft, onClick = onClick) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("+", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = vibe.primary)
-            Text("add", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = vibe.primary)
+            Text("+", fontFamily = Arcade, fontSize = 18.sp, color = vibe.primary)
+            Text("ADD", fontFamily = Vcr, fontSize = 18.sp, color = vibe.primary, modifier = Modifier.padding(top = 4.dp))
         }
     }
 }
@@ -522,22 +515,21 @@ private fun PhotoThumb(file: String, selected: Boolean, onClick: () -> Unit, onR
     val thumb by produceState<ImageBitmap?>(null, file) {
         value = withContext(Dispatchers.IO) { PhotoStore.load(context, file, 200)?.asImageBitmap() }
     }
-    Box(Modifier.size(76.dp)) {
-        Box(
-            Modifier
-                .align(Alignment.BottomStart)
-                .size(70.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(vibe.soft)
-                .then(if (selected) Modifier.border(3.dp, vibe.primary, RoundedCornerShape(20.dp)) else Modifier)
-                .clickable(onClick = onClick),
+    Box(Modifier.size(80.dp)) {
+        RetroBlock(
+            Modifier.align(Alignment.BottomStart).size(74.dp),
+            fill = vibe.soft,
+            border = if (selected) vibe.primary else blockShadow(),
+            onClick = onClick,
+            held = selected,
+            depth = 4.dp,
         ) {
             thumb?.let {
                 Image(
                     it,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize().padding(if (selected) 3.dp else 0.dp).clip(RoundedCornerShape(17.dp)),
+                    modifier = Modifier.fillMaxSize().padding(if (selected) 4.dp else 2.dp),
                 )
             }
         }
@@ -545,12 +537,12 @@ private fun PhotoThumb(file: String, selected: Boolean, onClick: () -> Unit, onR
             Modifier
                 .align(Alignment.TopEnd)
                 .size(24.dp)
-                .clip(CircleShape)
-                .background(vibe.ink.copy(alpha = 0.78f))
+                .background(blockShadow())
+                .border(2.dp, vibe.ink.copy(alpha = 0.8f))
                 .clickable(onClick = onRemove),
             contentAlignment = Alignment.Center,
         ) {
-            Text("×", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text("×", color = Color.White, fontFamily = Vcr, fontSize = 22.sp)
         }
     }
 }
@@ -561,14 +553,12 @@ private fun ShapeTile(shape: FrameShape, selected: Boolean, onClick: () -> Unit)
     val fill = if (selected) vibe.primary else vibe.surface
     val ink = if (selected) vibe.onPrimary else vibe.primary
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(22.dp))
-                .background(fill)
-                .border(1.5.dp, if (selected) vibe.primary else vibe.soft, RoundedCornerShape(22.dp))
-                .clickable(onClick = onClick)
-                .padding(14.dp),
+        RetroBlock(
+            Modifier.size(68.dp),
+            fill = fill,
+            onClick = onClick,
+            held = selected,
+            contentPadding = PaddingValues(14.dp),
         ) {
             Canvas(Modifier.fillMaxSize()) {
                 val box = Shapes.box(shape, RectF(0f, 0f, size.width, size.height))
@@ -576,38 +566,37 @@ private fun ShapeTile(shape: FrameShape, selected: Boolean, onClick: () -> Unit)
                 if (shape.isCard) drawPath(Shapes.photoClip(shape, box).asComposePath(), fill)
             }
         }
-        Text(shape.label, fontSize = 12.sp, color = vibe.ink, modifier = Modifier.padding(top = 4.dp))
+        Text(shape.label.uppercase(), fontFamily = Vcr, fontSize = 17.sp, color = vibe.ink, modifier = Modifier.padding(top = 2.dp))
     }
 }
 
 @Composable
 private fun FilterTile(filter: PhotoFilter, thumb: ImageBitmap?, selected: Boolean, onClick: () -> Unit) {
     val vibe = LocalVibe.current
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(72.dp)) {
-        Box(
-            Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(vibe.soft)
-                .then(if (selected) Modifier.border(3.dp, vibe.primary, RoundedCornerShape(20.dp)) else Modifier)
-                .clickable(onClick = onClick),
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(80.dp)) {
+        RetroBlock(
+            Modifier.size(68.dp),
+            fill = vibe.soft,
+            border = if (selected) vibe.primary else blockShadow(),
+            onClick = onClick,
+            held = selected,
         ) {
             thumb?.let {
                 Image(
                     it,
                     contentDescription = filter.label,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize().padding(if (selected) 3.dp else 0.dp).clip(RoundedCornerShape(17.dp)),
+                    modifier = Modifier.fillMaxSize().padding(if (selected) 4.dp else 2.dp),
                 )
             }
         }
         Text(
-            filter.label,
-            fontSize = 12.sp,
+            filter.label.uppercase(),
+            fontFamily = Vcr,
+            fontSize = 17.sp,
             maxLines = 1,
             color = if (selected) vibe.primary else vibe.ink,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = 2.dp),
         )
     }
 }

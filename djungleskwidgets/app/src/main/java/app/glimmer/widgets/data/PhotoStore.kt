@@ -6,12 +6,15 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ImageDecoder
+import android.media.ExifInterface
 import android.net.Uri
 import android.util.Log
 import android.util.LruCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
@@ -36,8 +39,11 @@ object PhotoStore {
 
     private fun dir(context: Context) = File(context.filesDir, "photos").apply { mkdirs() }
 
-    /** Copies a picked image in, shrunk to a sensible size with its orientation fixed. */
-    suspend fun import(context: Context, uri: Uri): String? = withContext(Dispatchers.IO) {
+    /**
+     * Copies a picked image in, shrunk to a sensible size with its orientation fixed, and notes
+     * when it was taken for the camcorder stamp.
+     */
+    suspend fun import(context: Context, uri: Uri): PhotoRef? = withContext(Dispatchers.IO) {
         runCatching {
             val source = ImageDecoder.createSource(context.contentResolver, uri)
             val bitmap = ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
@@ -53,9 +59,26 @@ object PhotoStore {
                     )
                 }
             }
-            importBitmap(context, bitmap).also { bitmap.recycle() }
+            val name = importBitmap(context, bitmap).also { bitmap.recycle() }
+            PhotoRef(name, taken = takenAt(context, uri) ?: System.currentTimeMillis())
         }.onFailure { Log.w(TAG, "Could not import $uri", it) }.getOrNull()
     }
+
+    /** When the camera says the photo was taken, or null if it does not say. */
+    private fun takenAt(context: Context, uri: Uri): Long? = runCatching {
+        context.contentResolver.openInputStream(uri)?.use { stream ->
+            val exif = ExifInterface(stream)
+            val stamp = exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
+                ?: exif.getAttribute(ExifInterface.TAG_DATETIME)
+                ?: return@use null
+            // Camera clocks keep local time with no zone, which is how the stamp should read too.
+            SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.US).parse(stamp.trim())?.time
+        }
+    }.getOrNull()
+
+    /** When a stored photo was added, for photos that predate [PhotoRef.taken]. */
+    fun addedAt(context: Context, name: String): Long? =
+        File(dir(context), name).lastModified().takeIf { it > 0L }
 
     /** Saves [bitmap] as a new photo and returns its file name. */
     fun importBitmap(context: Context, bitmap: Bitmap): String {

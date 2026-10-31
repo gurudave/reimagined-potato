@@ -27,6 +27,8 @@ enum class PhotoFilter(val label: String) {
     FROST("frost"),
     NOIR("noir"),
     POP("pop"),
+    VHS("vhs"),
+    FADED("faded"),
 }
 
 enum class CaptionFont(val label: String, @FontRes val res: Int) {
@@ -35,6 +37,8 @@ enum class CaptionFont(val label: String, @FontRes val res: Int) {
     CLASSY("classy", R.font.playfair_italic),
     BUBBLY("bubbly", R.font.cherry_bomb),
     TYPEWRITER("typewriter", R.font.space_mono),
+    VHS("vhs", R.font.vt323),
+    ARCADE("arcade", R.font.press_start),
 }
 
 enum class ShuffleEvery(val label: String, val minutes: Long) {
@@ -55,23 +59,28 @@ data class Swatch(val name: String, val argb: Int)
 
 val Swatches = listOf(
     Swatch("white", 0xFFFFFFFF.toInt()),
-    Swatch("cream", 0xFFFFF5E1.toInt()),
-    Swatch("blush", 0xFFF9C9D6.toInt()),
-    Swatch("strawberry", 0xFFEF7EA4.toInt()),
-    Swatch("lilac", 0xFFD8CCFF.toInt()),
-    Swatch("sage", 0xFFC5DBB2.toInt()),
-    Swatch("sky", 0xFFC4DEF7.toInt()),
-    Swatch("butter", 0xFFFFE59C.toInt()),
-    Swatch("cocoa", 0xFF6E4C45.toInt()),
-    Swatch("ink", 0xFF1F1B26.toInt()),
+    Swatch("cream", 0xFFF3E9D2.toInt()),
+    Swatch("mustard", 0xFFE0A93B.toInt()),
+    Swatch("arcade orange", 0xFFFF7A1A.toInt()),
+    Swatch("cherry", 0xFFB3302A.toInt()),
+    Swatch("neon pink", 0xFFFF4F8E.toInt()),
+    Swatch("rink teal", 0xFF3CC6C0.toInt()),
+    Swatch("maze blue", 0xFF2C4BFF.toInt()),
+    Swatch("sleeve brown", 0xFF6B3E26.toInt()),
+    Swatch("ink", 0xFF1A1620.toInt()),
 )
 
-/** One photo plus how it is framed: the point to keep centred and how far to zoom in. */
+/**
+ * One photo plus how it is framed: the point to keep centred and how far to zoom in.
+ * [taken] is when the photo was shot, from its camera data, for the camcorder stamp; null
+ * for photos added before the app kept it, which fall back to when they were added.
+ */
 data class PhotoRef(
     val file: String,
     val focusX: Float = 0.5f,
     val focusY: Float = 0.5f,
     val zoom: Float = 1f,
+    val taken: Long? = null,
 )
 
 data class WidgetConfig(
@@ -87,6 +96,8 @@ data class WidgetConfig(
     val tilt: Float = 0f,
     val grain: Boolean = false,
     val shadow: Boolean = true,
+    /** "PLAY" and the date the photo was taken, in the corners like a home video. */
+    val camcorder: Boolean = false,
     /** How solid the whole widget is, from [MIN_OPACITY] (mostly wallpaper) to 1 (fully solid). */
     val opacity: Float = 1f,
     val shuffle: ShuffleEvery = ShuffleEvery.NEVER,
@@ -118,6 +129,7 @@ data class WidgetConfig(
         frameColor = (listOf<Int?>(null) + Swatches.map { it.argb }).random(random),
         font = CaptionFont.entries.random(random),
         tilt = listOf(0f, -4f, 4f).random(random),
+        camcorder = random.nextInt(4) == 0,
     )
 
     fun toJson(): JSONObject = JSONObject().apply {
@@ -129,6 +141,7 @@ data class WidgetConfig(
                         .put("fx", it.focusX.toDouble())
                         .put("fy", it.focusY.toDouble())
                         .put("zoom", it.zoom.toDouble())
+                        .apply { it.taken?.let { taken -> put("taken", taken) } }
                 )
             }
         })
@@ -141,6 +154,7 @@ data class WidgetConfig(
         put("tilt", tilt.toDouble())
         put("grain", grain)
         put("shadow", shadow)
+        put("camcorder", camcorder)
         put("opacity", opacity.toDouble())
         put("shuffle", shuffle.name)
         put("tap", tapAction.name)
@@ -161,6 +175,7 @@ data class WidgetConfig(
                             focusX = p.optDouble("fx", 0.5).toFloat(),
                             focusY = p.optDouble("fy", 0.5).toFloat(),
                             zoom = p.optDouble("zoom", 1.0).toFloat(),
+                            taken = if (p.has("taken")) p.optLong("taken") else null,
                         )
                     }
                 }
@@ -176,6 +191,7 @@ data class WidgetConfig(
                 tilt = o.optDouble("tilt", 0.0).toFloat(),
                 grain = o.optBoolean("grain", false),
                 shadow = o.optBoolean("shadow", true),
+                camcorder = o.optBoolean("camcorder", false),
                 opacity = o.optDouble("opacity", 1.0).toFloat().coerceIn(MIN_OPACITY, 1f),
                 shuffle = enumOr(o.optString("shuffle"), ShuffleEvery.NEVER),
                 tapAction = enumOr(o.optString("tap"), TapAction.NEXT_PHOTO),

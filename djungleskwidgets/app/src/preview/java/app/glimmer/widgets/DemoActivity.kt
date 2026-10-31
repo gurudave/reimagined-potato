@@ -87,22 +87,24 @@ class DemoActivity : ComponentActivity() {
                     frameColor = 0xFFF9C9D6.toInt(),
                 )
                 2 -> WidgetConfig(
-                    photos = pics(2, 3), shape = FrameShape.ARCH, filter = PhotoFilter.VINTAGE, grain = true,
-                    caption = "summer '26", font = CaptionFont.SCRIPT,
+                    photos = pics(2, 3), shape = FrameShape.SOFT, filter = PhotoFilter.VHS, camcorder = true,
+                    caption = "summer '26", font = CaptionFont.VHS,
                 )
                 3 -> WidgetConfig(
                     photos = pics(3, 0), shape = FrameShape.FLOWER, filter = PhotoFilter.GOLDEN,
                     frameColor = 0xFFFFE59C.toInt(), opacity = 0.7f,
                 )
                 4 -> WidgetConfig(
-                    photos = pics(0), shape = FrameShape.STAMP, filter = PhotoFilter.FROST, tilt = 4f,
+                    photos = pics(0), shape = FrameShape.STAMP, filter = PhotoFilter.FADED, tilt = 4f,
+                    frameColor = 0xFFF3E9D2.toInt(),
                 )
                 5 -> WidgetConfig(
                     photos = pics(3), shape = FrameShape.CIRCLE, filter = PhotoFilter.NOIR,
                     caption = "main character", font = CaptionFont.CLASSY, frameColor = 0xFF1F1B26.toInt(),
                 )
                 else -> WidgetConfig(
-                    photos = pics(2), shape = FrameShape.SOFT, caption = "us ♡", font = CaptionFont.BUBBLY,
+                    photos = pics(2), shape = FrameShape.ARCH, filter = PhotoFilter.VINTAGE, grain = true,
+                    caption = "1UP", font = CaptionFont.ARCADE, camcorder = true,
                 )
             }
         }
@@ -117,7 +119,7 @@ class DemoActivity : ComponentActivity() {
 
         fun renderGallery(context: Context, photos: List<String>) {
             val dir = File(context.getExternalFilesDir(null), "preview").apply { mkdirs() }
-            val filters = listOf(PhotoFilter.NONE, PhotoFilter.DREAMY, PhotoFilter.VINTAGE, PhotoFilter.NOIR)
+            val filters = listOf(PhotoFilter.NONE, PhotoFilter.VHS, PhotoFilter.FADED, PhotoFilter.NOIR)
             val shapes = FrameShape.entries.flatMap { shape ->
                 filters.mapIndexed { i, filter ->
                     WidgetConfig(photos = listOf(PhotoRef(photos[i % photos.size])), shape = shape, filter = filter)
@@ -152,7 +154,7 @@ class DemoActivity : ComponentActivity() {
             val bitmap = Bitmap.createBitmap(columns * cell, rows * cell, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
             canvas.drawRect(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat(), Paint().apply {
-                shader = LinearGradient(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat(), 0xFFF6C7D9.toInt(), 0xFFC9D8F7.toInt(), Shader.TileMode.CLAMP)
+                shader = LinearGradient(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat(), 0xFF22163F.toInt(), 0xFF5A2A4E.toInt(), Shader.TileMode.CLAMP)
             })
             items.forEachIndexed { i, (config, size) ->
                 val tile = WidgetRenderer.render(context, config, size.first, size.second)
