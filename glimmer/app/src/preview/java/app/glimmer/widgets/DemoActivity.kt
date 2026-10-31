@@ -92,7 +92,7 @@ class DemoActivity : ComponentActivity() {
                 )
                 3 -> WidgetConfig(
                     photos = pics(3, 0), shape = FrameShape.FLOWER, filter = PhotoFilter.GOLDEN,
-                    sticker = "🌸", frameColor = 0xFFFFE59C.toInt(),
+                    sticker = "🌸", frameColor = 0xFFFFE59C.toInt(), opacity = 0.7f,
                 )
                 4 -> WidgetConfig(
                     photos = pics(0), shape = FrameShape.STAMP, filter = PhotoFilter.FROST, sticker = "🦋", tilt = 4f,

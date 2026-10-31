@@ -91,6 +91,8 @@ data class WidgetConfig(
     val tilt: Float = 0f,
     val grain: Boolean = false,
     val shadow: Boolean = true,
+    /** How solid the whole widget is, from [MIN_OPACITY] (mostly wallpaper) to 1 (fully solid). */
+    val opacity: Float = 1f,
     val shuffle: ShuffleEvery = ShuffleEvery.NEVER,
     val tapAction: TapAction = TapAction.NEXT_PHOTO,
     val index: Int = 0,
@@ -145,6 +147,7 @@ data class WidgetConfig(
         put("tilt", tilt.toDouble())
         put("grain", grain)
         put("shadow", shadow)
+        put("opacity", opacity.toDouble())
         put("shuffle", shuffle.name)
         put("tap", tapAction.name)
         put("index", index)
@@ -152,6 +155,9 @@ data class WidgetConfig(
     }
 
     companion object {
+        /** Below this a widget all but vanishes and becomes hard to find, let alone tap. */
+        const val MIN_OPACITY = 0.2f
+
         fun fromJson(o: JSONObject): WidgetConfig {
             val photos = o.optJSONArray("photos")?.let { arr ->
                 (0 until arr.length()).mapNotNull { i ->
@@ -177,6 +183,7 @@ data class WidgetConfig(
                 tilt = o.optDouble("tilt", 0.0).toFloat(),
                 grain = o.optBoolean("grain", false),
                 shadow = o.optBoolean("shadow", true),
+                opacity = o.optDouble("opacity", 1.0).toFloat().coerceIn(MIN_OPACITY, 1f),
                 shuffle = enumOr(o.optString("shuffle"), ShuffleEvery.NEVER),
                 tapAction = enumOr(o.optString("tap"), TapAction.NEXT_PHOTO),
                 index = o.optInt("index", 0),
