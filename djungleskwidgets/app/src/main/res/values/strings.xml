@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Djungleskwidgets</string>
+    <string name="widget_name">Djungleskwidgets photo</string>
+    <string name="widget_description">Your photos, framed cute. No ads, ever.</string>
+    <string name="widget_preview_text">✧ your photo here ✧</string>
+    <string name="widget_photo_desc">Photo widget</string>
+</resources>
