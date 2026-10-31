@@ -43,13 +43,31 @@ secret**, twice:
 Keep `glimmer.jks` somewhere safe and out of the repository. Without the secrets, CI still
 builds a working APK but warns that it is signed with a throwaway key.
 
+## Publishing a release
+
+Push a version tag and CI does the rest:
+
+```sh
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+The tagged build gets version name `1.1.0`, and once it is green a **Glimmer v1.1.0** release
+appears on the repository's **Releases** page with `glimmer-1.1.0.apk` (and its SHA-256
+checksum) attached and notes drawn from the merged pull requests. Tags must start with
+`v` and a digit. A tagged build refuses to run without the signing key above, since a
+release signed with a throwaway key could not update her phone. If a release run fails part
+way, re-run it from the Actions tab: it refreshes the files on the existing release.
+
 ## Installing it on her phone
 
-1. Open the repository's **Actions** tab → **Glimmer Android** → the latest green run.
-2. Download the **glimmer-apk** artifact (a zip) and unzip it to get `glimmer-1.0.N.apk`.
-3. Get the APK onto the phone (Google Drive, a USB cable, Nearby Share, email to herself).
-4. Tap it. Android will ask to allow installs from that app (Files, Drive, …); allow it once.
-5. Open **Glimmer**, tap **✚ new widget**, design away, then **add to home screen ✧**.
+1. Open the repository's **Releases** page and, under the latest release, download
+   `glimmer-X.Y.Z.apk`. (Untagged test builds live under **Actions** → **Glimmer Android**
+   → a green run → the **glimmer-apk** artifact, a zip holding `glimmer-1.0.N.apk`.)
+2. Get the APK onto the phone (Google Drive, a USB cable, Nearby Share, email to herself).
+   Better still, open the Releases page in the phone's own browser and download it there.
+3. Tap it. Android will ask to allow installs from that app (Files, Drive, …); allow it once.
+4. Open **Glimmer**, tap **✚ new widget**, design away, then **add to home screen ✧**.
 
 Updates install the same way, straight over the old version, and her widgets stay put.
 
