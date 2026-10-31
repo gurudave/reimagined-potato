@@ -46,7 +46,7 @@ class ConfigureActivity : ComponentActivity() {
                     title = if (existing == null) "new widget" else "edit widget",
                     initial = initial,
                     previewAspect = w.toFloat() / h,
-                    saveLabel = "save widget ✧",
+                    saveLabel = "save widget",
                     onSave = { design ->
                         scope.launch {
                             withContext(Dispatchers.Default) {

@@ -1,7 +1,6 @@
 package app.glimmer.widgets.ui
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -9,80 +8,149 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.glimmer.widgets.ui.theme.Arcade
 import app.glimmer.widgets.ui.theme.LocalVibe
+import app.glimmer.widgets.ui.theme.Vcr
+import kotlin.math.roundToInt
 
+/** The colour of the hard drop shadow under every block: dark on any vibe. */
 @Composable
-fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text,
-        color = LocalVibe.current.ink.copy(alpha = 0.75f),
-        fontWeight = FontWeight.Bold,
-        fontSize = 14.sp,
-        letterSpacing = 0.6.sp,
-        modifier = modifier,
+fun blockShadow(): Color {
+    val vibe = LocalVibe.current
+    return if (vibe.isDark) Color.Black else vibe.ink.copy(alpha = 0.85f)
+}
+
+/**
+ * The basic building block: a nearly square slab with a hard, unblurred drop shadow, like an
+ * arcade button. Pressing it (or [held]) sinks it into its shadow.
+ */
+@Composable
+fun RetroBlock(
+    modifier: Modifier = Modifier,
+    fill: Color = LocalVibe.current.surface,
+    border: Color = blockShadow(),
+    onClick: (() -> Unit)? = null,
+    held: Boolean = false,
+    depth: Dp = 4.dp,
+    corner: Dp = 4.dp,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    contentAlignment: Alignment = Alignment.Center,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val sunk = held || pressed
+    val shape = RoundedCornerShape(corner)
+    val shadow = blockShadow()
+    Box(
+        modifier
+            .padding(end = depth, bottom = depth)
+            .drawBehind {
+                drawRoundRect(shadow, Offset(depth.toPx(), depth.toPx()), size, CornerRadius(corner.toPx()))
+            }
+            .offset { if (sunk) IntOffset(depth.roundToPx(), depth.roundToPx()) else IntOffset.Zero }
+            .clip(shape)
+            .background(fill)
+            .border(2.dp, border, shape)
+            .then(if (onClick != null) Modifier.clickable(source, indication = null, onClick = onClick) else Modifier)
+            .padding(contentPadding),
+        contentAlignment = contentAlignment,
+        content = content,
     )
 }
 
-/** A rounded, tappable label. The selected one is filled with the vibe's colour. */
+/** A heading over each group of settings, like a line of a VCR's set-up menu. */
 @Composable
-fun PillChip(
+fun SectionTitle(text: String, modifier: Modifier = Modifier) {
+    val vibe = LocalVibe.current
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(8.dp).background(vibe.accent))
+        Text(
+            text.uppercase(),
+            color = vibe.ink.copy(alpha = 0.85f),
+            fontFamily = Vcr,
+            fontSize = 22.sp,
+            letterSpacing = 1.5.sp,
+            modifier = Modifier.padding(start = 8.dp),
+        )
+    }
+}
+
+/**
+ * A tappable label. The chosen one is lit in the vibe's colour and pressed in. Labels in the
+ * app's own lettering are shouted in capitals; caption-font samples keep their own case.
+ */
+@Composable
+fun RetroChip(
     text: String,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     fontFamily: FontFamily? = null,
-    fontSize: TextUnit = 14.sp,
+    fontSize: TextUnit = 20.sp,
 ) {
     val vibe = LocalVibe.current
-    val background by animateColorAsState(if (selected) vibe.primary else vibe.surface, label = "chip")
-    Box(
-        modifier
-            .clip(CircleShape)
-            .background(background)
-            .border(1.5.dp, if (selected) vibe.primary else vibe.soft, CircleShape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 9.dp),
-        contentAlignment = Alignment.Center,
+    RetroBlock(
+        modifier,
+        fill = if (selected) vibe.primary else vibe.surface,
+        onClick = onClick,
+        held = selected,
+        depth = 3.dp,
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
     ) {
         Text(
-            text,
+            if (fontFamily == null) text.uppercase() else text,
             color = if (selected) vibe.onPrimary else vibe.ink,
-            fontFamily = fontFamily,
-            fontSize = fontSize,
-            fontWeight = FontWeight.Bold,
+            fontFamily = fontFamily ?: Vcr,
+            fontSize = if (fontFamily == null) fontSize else 16.sp,
             maxLines = 1,
         )
     }
@@ -92,15 +160,15 @@ fun PillChip(
 fun <T> ChipRow(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         items(options) { option ->
-            PillChip(label(option), option == selected, onClick = { onSelect(option) })
+            RetroChip(label(option), option == selected, onClick = { onSelect(option) })
         }
     }
 }
 
-/** A colour dot. Pass a null [color] for "none"/"auto", with [content] to say which. */
+/** A square colour chip. Pass a null [color] for "none"/"auto", with [content] to say which. */
 @Composable
 fun SwatchDot(
     color: Color?,
@@ -110,20 +178,18 @@ fun SwatchDot(
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val vibe = LocalVibe.current
-    Box(
-        Modifier
-            .size(42.dp)
-            .clip(CircleShape)
-            .clickable(onClick = onClick)
-            .semantics { contentDescription = label }
-            .border(if (selected) 3.dp else 1.5.dp, if (selected) vibe.primary else vibe.soft, CircleShape)
-            .padding(5.dp)
-            .clip(CircleShape)
-            .background(color ?: vibe.surface)
-            .border(1.dp, vibe.ink.copy(alpha = 0.08f), CircleShape),
-        contentAlignment = Alignment.Center,
-        content = content,
-    )
+    RetroBlock(
+        Modifier.size(46.dp).semantics { contentDescription = label },
+        fill = color ?: vibe.surface,
+        border = if (selected) vibe.primary else blockShadow(),
+        onClick = onClick,
+        held = selected,
+        depth = 3.dp,
+        corner = 3.dp,
+    ) {
+        if (selected) Box(Modifier.fillMaxWidth().fillMaxHeight().padding(3.dp).border(2.dp, vibe.primary.copy(alpha = 0.6f)))
+        content()
+    }
 }
 
 /** The diagonal line drawn inside a "none" swatch. */
@@ -131,56 +197,121 @@ fun Modifier.noneSlash(color: Color) = drawBehind {
     drawLine(color, Offset(size.width * 0.78f, size.height * 0.22f), Offset(size.width * 0.22f, size.height * 0.78f), strokeWidth = 2.dp.toPx())
 }
 
+/** A setting that is on or off, with a chunky ON/OFF key instead of a slider switch. */
 @Composable
 fun ToggleRow(label: String, hint: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     val vibe = LocalVibe.current
     Row(
         Modifier
             .fillMaxWidth()
-            .clickable { onChange(!checked) }
+            .toggleable(checked, role = Role.Switch, onValueChange = onChange)
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(label, color = vibe.ink, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text(hint, color = vibe.ink.copy(alpha = 0.6f), fontSize = 13.sp)
+            Text(label.uppercase(), color = vibe.ink, fontFamily = Vcr, fontSize = 22.sp)
+            Text(hint, color = vibe.ink.copy(alpha = 0.6f), fontFamily = Vcr, fontSize = 18.sp)
         }
-        Switch(
-            checked = checked,
-            onCheckedChange = onChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = vibe.onPrimary,
-                checkedTrackColor = vibe.primary,
-                checkedBorderColor = vibe.primary,
-                uncheckedThumbColor = vibe.primary.copy(alpha = 0.7f),
-                uncheckedTrackColor = vibe.surface,
-                uncheckedBorderColor = vibe.soft,
-            ),
-        )
+        RetroBlock(
+            Modifier.width(76.dp),
+            fill = if (checked) vibe.primary else vibe.surface,
+            held = checked,
+            depth = 3.dp,
+            contentPadding = PaddingValues(vertical = 6.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(8.dp).background(if (checked) vibe.accent else vibe.ink.copy(alpha = 0.25f)))
+                Text(
+                    if (checked) "ON" else "OFF",
+                    color = if (checked) vibe.onPrimary else vibe.ink.copy(alpha = 0.7f),
+                    fontFamily = Vcr,
+                    fontSize = 20.sp,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
+            }
+        }
     }
 }
 
-/** The big gradient call-to-action pill. */
+/**
+ * A row of blocks that light up from the left, like the volume bar a television shows.
+ * Tap or slide along it. [steps] blocks stand for [min]..1.
+ */
+@Composable
+fun SegmentBar(value: Float, min: Float, steps: Int, label: String, onChange: (Float) -> Unit, modifier: Modifier = Modifier) {
+    val vibe = LocalVibe.current
+    // The gesture handlers outlive a recomposition, so they call whatever onChange is newest.
+    val change by rememberUpdatedState(onChange)
+    val lit = (((value - min) / (1f - min)) * (steps - 1)).roundToInt() + 1
+    fun valueAt(x: Float, width: Int): Float {
+        val index = ((x / width.coerceAtLeast(1)) * steps).toInt().coerceIn(0, steps - 1)
+        return min + (1f - min) * index / (steps - 1)
+    }
+    Row(
+        modifier
+            .height(30.dp)
+            .semantics {
+                contentDescription = label
+                progressBarRangeInfo = ProgressBarRangeInfo(value, min..1f, steps - 2)
+                setProgress { target ->
+                    change(target.coerceIn(min, 1f))
+                    true
+                }
+            }
+            .pointerInput(steps, min) {
+                detectTapGestures { change(valueAt(it.x, size.width)) }
+            }
+            .pointerInput(steps, min) {
+                detectHorizontalDragGestures { pointer, _ -> change(valueAt(pointer.position.x, size.width)) }
+            },
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        repeat(steps) { i ->
+            val on = i < lit
+            // The blocks grow a little taller towards the right, as volume bars do.
+            val rise = 0.45f + 0.55f * i / (steps - 1)
+            Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.BottomCenter) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(rise)
+                        .background(if (on) (if (i == lit - 1) vibe.accent else vibe.primary) else vibe.soft)
+                )
+            }
+        }
+    }
+}
+
+/** The big call to action: an arcade start button with cabinet stripes along its foot. */
 @Composable
 fun DjungleskwidgetsButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val vibe = LocalVibe.current
-    Box(
-        modifier
-            .shadow(14.dp, CircleShape, ambientColor = vibe.primary, spotColor = vibe.primary)
-            .clip(CircleShape)
-            .background(Brush.horizontalGradient(listOf(vibe.primary, vibe.accent)))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 30.dp, vertical = 16.dp),
-        contentAlignment = Alignment.Center,
+    RetroBlock(
+        modifier,
+        fill = vibe.primary,
+        onClick = onClick,
+        depth = 6.dp,
+        corner = 6.dp,
     ) {
-        Text(text, color = vibe.onPrimary, fontWeight = FontWeight.Bold, fontSize = 17.sp, textAlign = TextAlign.Center)
+        // As wide as the lettering, so the stripes run the full width of the button and no further.
+        Column(Modifier.width(IntrinsicSize.Max), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text.uppercase(),
+                color = vibe.onPrimary,
+                fontFamily = Arcade,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(start = 26.dp, end = 26.dp, top = 16.dp, bottom = 12.dp),
+            )
+            ArcadeStripes(vibe.stripes, Modifier.fillMaxWidth(), band = 3.dp, gap = 0.dp)
+        }
     }
 }
 
-/** A short message that slides up from the bottom of the screen. */
+/** A short message that slides up from the bottom, in on-screen-display lettering. */
 @Composable
 fun ToastPill(text: String, visible: Boolean, modifier: Modifier = Modifier) {
-    val vibe = LocalVibe.current
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn() + slideInVertically { it },
@@ -188,16 +319,14 @@ fun ToastPill(text: String, visible: Boolean, modifier: Modifier = Modifier) {
         modifier = modifier,
     ) {
         Text(
-            text,
-            color = vibe.background,
-            fontWeight = FontWeight.Bold,
-            fontSize = 15.sp,
+            text.uppercase(),
+            style = osdStyle(22.sp),
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .padding(horizontal = 24.dp)
-                .clip(CircleShape)
-                .background(vibe.ink.copy(alpha = 0.92f))
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .background(Color.Black.copy(alpha = 0.8f))
+                .border(2.dp, Color.White.copy(alpha = 0.8f))
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
 }

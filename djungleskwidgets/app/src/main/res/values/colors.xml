@@ -1,3 +1,4 @@
 <resources>
-    <color name="djungleskwidgets_blush">#FFFFF3F6</color>
+    <!-- The arcade channel's backdrop, shown for a moment while the app starts. -->
+    <color name="djungleskwidgets_backdrop">#FF120D16</color>
 </resources>

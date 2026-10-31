@@ -27,7 +27,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.sp
+import app.glimmer.widgets.ui.theme.Arcade
+import app.glimmer.widgets.ui.theme.Vcr
 import androidx.compose.ui.unit.dp
 import app.glimmer.widgets.data.AppSettings
 import app.glimmer.widgets.data.WidgetConfig
@@ -97,12 +100,12 @@ fun DjungleskwidgetsApp(requestedWidget: Int?, onRequestHandled: () -> Unit) {
                         title = "new widget",
                         initial = remember { WidgetStore.peekPendingDraft(context) ?: WidgetConfig() },
                         previewAspect = 1f,
-                        saveLabel = "add to home screen ✧",
+                        saveLabel = "add to home screen",
                         onSave = { design ->
                             if (WidgetUpdater.requestPin(context, design)) {
                                 screen = HOME
                                 burst++
-                                say("nearly there, confirm on your home screen ✧")
+                                say("nearly there: confirm on your home screen")
                             } else {
                                 WidgetStore.savePendingDraft(context, design)
                                 showPinHelp = true
@@ -119,13 +122,13 @@ fun DjungleskwidgetsApp(requestedWidget: Int?, onRequestHandled: () -> Unit) {
                             title = "edit widget",
                             initial = initial,
                             previewAspect = aspect,
-                            saveLabel = "save ✧",
+                            saveLabel = "save",
                             onSave = { design ->
                                 scope.launch {
                                     withContext(Dispatchers.Default) { WidgetUpdater.save(context, target, design) }
                                     screen = HOME
                                     burst++
-                                    say("saved ✧ your widget is updated")
+                                    say("saved. your widget is updated")
                                 }
                             },
                             onClose = { screen = HOME },
@@ -134,7 +137,7 @@ fun DjungleskwidgetsApp(requestedWidget: Int?, onRequestHandled: () -> Unit) {
                 }
             }
 
-            SparkleBurst(burst, listOf(colors.primary, colors.accent, colors.soft), Modifier.fillMaxSize())
+            PixelBurst(burst, colors.stripes, Modifier.fillMaxSize())
             ToastPill(
                 toast,
                 toastVisible,
@@ -148,18 +151,19 @@ fun DjungleskwidgetsApp(requestedWidget: Int?, onRequestHandled: () -> Unit) {
                         TextButton(onClick = {
                             showPinHelp = false
                             screen = HOME
-                        }) { Text("got it ✧", fontWeight = FontWeight.Bold, color = colors.primary) }
+                        }) { Text("GOT IT", fontFamily = Vcr, fontSize = 22.sp, color = colors.primary) }
                     },
-                    title = { Text("add it from your home screen", color = colors.ink) },
+                    title = { Text("ADD IT FROM YOUR HOME SCREEN", fontFamily = Arcade, fontSize = 13.sp, lineHeight = 20.sp, color = colors.ink) },
                     text = {
                         Text(
                             "your phone wants you to place widgets yourself: long-press an empty spot on " +
-                                "your home screen → widgets → djungleskwidgets. this design is saved and will be " +
-                                "waiting for you for the next half hour ✧",
+                                "your home screen > widgets > djungleskwidgets. this design is saved and will be " +
+                                "waiting for you for the next half hour.",
                             color = colors.ink,
                         )
                     },
                     containerColor = colors.surface,
+                    shape = RoundedCornerShape(6.dp),
                 )
             }
         }

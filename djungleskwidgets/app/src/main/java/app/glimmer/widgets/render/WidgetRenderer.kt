@@ -37,9 +37,10 @@ object WidgetRenderer {
     /** Keeps widget bitmaps small enough for the launcher to accept (about 2 MB each). */
     private const val MAX_PIXELS = 520_000
 
-    private const val COCOA = 0xFF5B443F.toInt()
-    private const val PLACEHOLDER_TOP = 0xFFFBC9DA.toInt()
-    private const val PLACEHOLDER_BOTTOM = 0xFFD5C8FF.toInt()
+    private const val COCOA = 0xFF3B2A20.toInt()
+    /** A dusk sky, purple through magenta to orange, for a widget still waiting for photos. */
+    private val PLACEHOLDER_SKY = intArrayOf(0xFF22163F.toInt(), 0xFF8E3A7C.toInt(), 0xFFFF8A3D.toInt())
+    private val CABINET_STRIPES = intArrayOf(0xFFFFC233.toInt(), 0xFFFF7A1A.toInt(), 0xFFE8322B.toInt())
 
     private val grainTile: Bitmap by lazy {
         val size = 160
@@ -86,6 +87,7 @@ object WidgetRenderer {
         canvas.clipPath(Shapes.photoClip(config.shape, box))
         if (photo != null && source != null) {
             drawPhoto(canvas, source, photo, photoRect, config.filter, config.grain)
+            if (config.camcorder) drawCamcorderStamp(context, canvas, config.shape, photo, photoRect)
         } else {
             drawPlaceholder(context, canvas, photoRect, unit)
         }
@@ -168,6 +170,7 @@ object WidgetRenderer {
                 )
             })
         }
+        if (Filters.hasScanlines(filter)) drawScanlines(canvas, dst)
         if (grain) {
             canvas.drawRect(dst, Paint().apply {
                 shader = BitmapShader(grainTile, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT)
@@ -178,20 +181,87 @@ object WidgetRenderer {
     private fun drawPlaceholder(context: Context, canvas: Canvas, rect: RectF, unit: Float) {
         canvas.drawRect(rect, Paint().apply {
             shader = LinearGradient(
-                rect.left, rect.top, rect.right, rect.bottom,
-                PLACEHOLDER_TOP, PLACEHOLDER_BOTTOM, Shader.TileMode.CLAMP,
+                rect.left, rect.top, rect.left, rect.bottom,
+                PLACEHOLDER_SKY, floatArrayOf(0f, 0.6f, 1f), Shader.TileMode.CLAMP,
             )
         })
+        drawScanlines(canvas, rect)
         val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             textAlign = Paint.Align.CENTER
-            typeface = Fonts.get(context, R.font.quicksand_bold)
-            textSize = unit * 0.085f
-            setShadowLayer(unit * 0.015f, 0f, unit * 0.004f, 0x33000000)
+            typeface = Fonts.get(context, R.font.press_start)
+            setShadowLayer(1f, unit * 0.008f, unit * 0.008f, 0xAA000000.toInt())
         }
-        val lineHeight = paint.textSize * 1.25f
-        canvas.drawText("add photos", rect.centerX(), rect.centerY() - lineHeight * 0.15f, paint)
-        canvas.drawText("✧", rect.centerX(), rect.centerY() + lineHeight * 0.95f, paint)
+        fitText(paint, "INSERT PHOTO", rect.width() * 0.78f, unit * 0.07f)
+        canvas.drawText("INSERT PHOTO", rect.centerX(), rect.centerY(), paint)
+        // Three cabinet stripes underneath.
+        val band = unit * 0.014f
+        val half = paint.measureText("INSERT PHOTO") / 2f
+        CABINET_STRIPES.forEachIndexed { i, stripe ->
+            val top = rect.centerY() + paint.textSize * 0.7f + i * band * 1.6f
+            canvas.drawRect(rect.centerX() - half, top, rect.centerX() + half, top + band, Paint().apply { color = stripe })
+        }
+    }
+
+    /** Fine dark lines across [rect], like the rows of a television picture. */
+    private fun drawScanlines(canvas: Canvas, rect: RectF) {
+        val step = max(3f, rect.height() / 110f)
+        val paint = Paint().apply { color = 0x26000000 }
+        var y = rect.top
+        while (y < rect.bottom) {
+            canvas.drawRect(rect.left, y, rect.right, y + step * 0.4f, paint)
+            y += step
+        }
+    }
+
+    /**
+     * "PLAY ▶" in one corner and the time and date the photo was taken in the other, in the
+     * lettering of a home-video camera. Placed to stay inside each frame's outline.
+     */
+    private fun drawCamcorderStamp(context: Context, canvas: Canvas, shape: FrameShape, photo: PhotoRef, r: RectF) {
+        val side = min(r.width(), r.height())
+        val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            typeface = Fonts.get(context, R.font.vt323)
+            textSize = side * 0.1f
+            setShadowLayer(1f, textSize * 0.06f, textSize * 0.06f, 0xB0000000.toInt())
+        }
+        val line = paint.textSize * 0.92f
+        val inset = side * 0.075f
+        val centred = shape == FrameShape.CIRCLE || shape == FrameShape.FLOWER || shape == FrameShape.HEART
+        // Where the top of "PLAY" and the foot of the date go.
+        val (playTop, dateBottom) = when (shape) {
+            FrameShape.CIRCLE, FrameShape.FLOWER -> r.top + r.height() * 0.13f to r.top + r.height() * 0.88f
+            FrameShape.HEART -> r.top + r.height() * 0.27f to r.top + r.height() * 0.76f
+            FrameShape.ARCH -> r.top + r.width() * 0.3f to r.bottom - inset
+            else -> r.top + inset to r.bottom - inset
+        }
+        val left = if (shape == FrameShape.ARCH) r.left + r.width() * 0.12f else r.left + inset
+
+        fun draw(text: String, baseline: Float, extra: Float = 0f): Float {
+            val width = paint.measureText(text) + extra
+            val x = if (centred) r.centerX() - width / 2f else left
+            canvas.drawText(text, x, baseline, paint)
+            return x + paint.measureText(text)
+        }
+
+        // VT323 has no ▶, so the triangle is drawn to match the lettering's capital height.
+        val cap = paint.textSize * 0.56f
+        val gap = paint.textSize * 0.25f
+        val playBaseline = playTop + cap
+        val end = draw("PLAY", playBaseline, extra = gap + cap * 0.9f)
+        val triangle = Path().apply {
+            moveTo(end + gap, playBaseline - cap)
+            lineTo(end + gap + cap * 0.9f, playBaseline - cap / 2f)
+            lineTo(end + gap, playBaseline)
+            close()
+        }
+        canvas.drawPath(triangle, paint)
+
+        val taken = photo.taken ?: PhotoStore.addedAt(context, photo.file) ?: return
+        val twentyFour = android.text.format.DateFormat.is24HourFormat(context)
+        draw(Camcorder.date(taken), dateBottom)
+        draw(Camcorder.time(taken, twentyFour), dateBottom - line)
     }
 
     private fun drawCaption(context: Context, canvas: Canvas, config: WidgetConfig, box: RectF, photoRect: RectF, unit: Float) {
@@ -211,10 +281,11 @@ object WidgetRenderer {
         paint.setShadowLayer(unit * 0.03f, 0f, unit * 0.008f, 0x99000000.toInt())
         val narrow = config.shape == FrameShape.CIRCLE || config.shape == FrameShape.HEART || config.shape == FrameShape.FLOWER
         fitText(paint, text, photoRect.width() * if (narrow) 0.62f else 0.84f, unit * 0.12f)
+        // With the camcorder stamp in the bottom corner, the caption moves up out of its way.
         val baseline = when (config.shape) {
-            FrameShape.HEART -> 0.68f
-            FrameShape.CIRCLE, FrameShape.FLOWER -> 0.8f
-            else -> 0.88f
+            FrameShape.HEART -> if (config.camcorder) 0.5f else 0.68f
+            FrameShape.CIRCLE, FrameShape.FLOWER -> if (config.camcorder) 0.6f else 0.8f
+            else -> if (config.camcorder) 0.66f else 0.88f
         }
         canvas.drawText(text, photoRect.centerX(), photoRect.top + photoRect.height() * baseline, paint)
     }
@@ -230,7 +301,7 @@ object WidgetRenderer {
         return if (luminance > 0.55) COCOA else Color.WHITE
     }
 
-    /** A little pastel sunset that stands in for a photo before she has picked any. */
+    /** A little dusk scene that stands in for a photo before she has picked any. */
     private fun sampleScene(size: Int): Bitmap {
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -238,7 +309,7 @@ object WidgetRenderer {
         canvas.drawRect(0f, 0f, s, s, Paint().apply {
             shader = LinearGradient(
                 0f, 0f, 0f, s,
-                intArrayOf(0xFF7A6FD6.toInt(), 0xFFF28FB0.toInt(), 0xFFFFC98B.toInt()),
+                intArrayOf(0xFF2A1B4E.toInt(), 0xFFD9507A.toInt(), 0xFFFFB259.toInt()),
                 floatArrayOf(0f, 0.55f, 1f),
                 Shader.TileMode.CLAMP,
             )
@@ -252,7 +323,7 @@ object WidgetRenderer {
             lineTo(0f, s)
             close()
         }
-        canvas.drawPath(hills, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF5B3F73.toInt() })
+        canvas.drawPath(hills, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF3A2150.toInt() })
         return bitmap
     }
 }

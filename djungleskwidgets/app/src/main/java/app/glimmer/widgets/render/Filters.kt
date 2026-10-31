@@ -16,11 +16,18 @@ object Filters {
         PhotoFilter.FROST to build(0.85f, 1f, floatArrayOf(0.92f, 1f, 1.08f), floatArrayOf(-2f, 6f, 18f)),
         PhotoFilter.NOIR to build(0f, 1.18f, ONE, ZERO),
         PhotoFilter.POP to build(1.4f, 1.12f, ONE, ZERO),
+        // A tape that has been played a few too many times: washed out, with blue-green shadows.
+        PhotoFilter.VHS to build(0.72f, 0.82f, floatArrayOf(1.02f, 0.98f, 1.04f), floatArrayOf(8f, 18f, 30f)),
+        // An old print left in the sun: lifted blacks, a warm cast, and gently drained colour.
+        PhotoFilter.FADED to build(0.68f, 0.76f, floatArrayOf(1.04f, 1f, 0.86f), floatArrayOf(34f, 28f, 14f)),
     )
 
     fun colorFilter(filter: PhotoFilter): ColorMatrixColorFilter? = filters[filter]
 
-    fun hasVignette(filter: PhotoFilter) = filter == PhotoFilter.VINTAGE || filter == PhotoFilter.NOIR
+    fun hasVignette(filter: PhotoFilter) =
+        filter == PhotoFilter.VINTAGE || filter == PhotoFilter.NOIR || filter == PhotoFilter.FADED
+
+    fun hasScanlines(filter: PhotoFilter) = filter == PhotoFilter.VHS
 
     private fun build(saturation: Float, contrast: Float, scale: FloatArray, offset: FloatArray): ColorMatrixColorFilter {
         val matrix = ColorMatrix().apply { setSaturation(saturation) }

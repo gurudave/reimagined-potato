@@ -80,7 +80,7 @@ if tap_text 'tap to edit'; then
 fi
 
 echo "== Trying the other vibes"
-for vibe in 'lavender haze' 'matcha latte' 'midnight'; do
+for vibe in 'high score' 'record shop' 'roller rink' 'arcade'; do
   if tap_text "vibe $vibe"; then
     shot "10-vibe-${vibe// /-}" 3
   fi
