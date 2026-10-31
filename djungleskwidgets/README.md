@@ -10,6 +10,7 @@ CI fails the build if that ever changes.
 - **Seven filters:** original, dreamy, vintage, golden hour, frost, noir, pop
 - **Captions** in five fonts, outline and paper colours
 - **Tilt, film grain and soft shadow** for the finishing touch
+- **Opacity** from fully solid down to a ghostly 20%, so the wallpaper can show through
 - **Pinch and drag** on the preview to frame each photo; double-tap to reset
 - **Several photos per widget:** tap the widget to flip to the next one, or let it
   shuffle by itself every 15 minutes, hourly, every 6 hours or daily

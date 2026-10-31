@@ -42,6 +42,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -387,6 +389,11 @@ fun EditorScreen(
                     ChipRow(listOf(0f, -4f, 4f), config.tilt, label = { tiltLabel(it) }) { config = config.copy(tilt = it) }
                 }
 
+                Section("opacity · ${(config.opacity * 100).roundToInt()}%") {
+                    OpacitySlider(config.opacity) { config = config.copy(opacity = it) }
+                    Hint(opacityHint(config.opacity))
+                }
+
                 Section("finishing touches") {
                     ToggleRow("film grain", "a soft analogue texture", config.grain) { config = config.copy(grain = it) }
                     ToggleRow("soft shadow", "lifts it off your wallpaper", config.shadow) { config = config.copy(shadow = it) }
@@ -425,6 +432,34 @@ private fun tiltLabel(tilt: Float) = when {
     tilt < 0f -> "lean left"
     tilt > 0f -> "lean right"
     else -> "straight"
+}
+
+private fun opacityHint(opacity: Float) = when {
+    opacity >= 0.99f -> "fully solid"
+    opacity >= 0.75f -> "a little sheer"
+    opacity >= 0.5f -> "misty, your wallpaper peeks through"
+    else -> "ghostly, more wallpaper than widget"
+}
+
+/** 20% to 100% in 5% steps; the preview above sits on a stand-in wallpaper to judge it by. */
+@Composable
+private fun OpacitySlider(opacity: Float, onChange: (Float) -> Unit) {
+    val vibe = LocalVibe.current
+    val min = WidgetConfig.MIN_OPACITY
+    Slider(
+        value = opacity.coerceIn(min, 1f),
+        onValueChange = { onChange((it * 20).roundToInt() / 20f) },
+        valueRange = min..1f,
+        steps = ((1f - min) * 20).roundToInt() - 1,
+        colors = SliderDefaults.colors(
+            thumbColor = vibe.primary,
+            activeTrackColor = vibe.primary,
+            inactiveTrackColor = vibe.soft,
+            activeTickColor = vibe.onPrimary.copy(alpha = 0.5f),
+            inactiveTickColor = vibe.primary.copy(alpha = 0.35f),
+        ),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+    )
 }
 
 @Composable

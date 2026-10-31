@@ -60,6 +60,12 @@ object WidgetRenderer {
         val area = RectF(pad, pad, w - pad, h - pad)
         val box = tiltSafe(Shapes.box(config.shape, area), area, config.tilt)
 
+        // Draw everything into one layer and fade it as a whole, so overlapping parts
+        // (paper, photo, outline, caption) do not show through each other.
+        val opacity = config.opacity.coerceIn(WidgetConfig.MIN_OPACITY, 1f)
+        val faded = opacity < 1f
+        if (faded) canvas.saveLayerAlpha(0f, 0f, w.toFloat(), h.toFloat(), (opacity * 255).roundToInt())
+
         canvas.save()
         canvas.rotate(config.tilt, box.centerX(), box.centerY())
 
@@ -95,6 +101,7 @@ object WidgetRenderer {
         if (config.caption.isNotBlank()) drawCaption(context, canvas, config, box, photoRect, unit)
         canvas.restore()
 
+        if (faded) canvas.restore()
         return bitmap
     }
 
