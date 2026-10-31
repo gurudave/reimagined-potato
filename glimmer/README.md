@@ -8,7 +8,7 @@ CI fails the build if that ever changes.
 
 - **Seven frames:** soft square, circle, arch, heart, flower, polaroid, postage stamp
 - **Seven filters:** original, dreamy, vintage, golden hour, frost, noir, pop
-- **Stickers** (🎀 ✨ 💗 🌸 🦋 🍓 🍒 …), **captions** in five fonts, outline and paper colours
+- **Captions** in five fonts, outline and paper colours
 - **Tilt, film grain and soft shadow** for the finishing touch
 - **Pinch and drag** on the preview to frame each photo; double-tap to reset
 - **Several photos per widget:** tap the widget to flip to the next one, or let it
@@ -67,7 +67,7 @@ as base64 JPEGs, for tools that can read job logs but cannot download artifacts.
 | Piece | Where |
 |---|---|
 | Design data (JSON in SharedPreferences) | `app/src/main/java/app/glimmer/widgets/data/` |
-| Bitmap renderer: frames, filters, captions, stickers | `…/render/` |
+| Bitmap renderer: frames, filters, captions | `…/render/` |
 | Widget provider, pinning, shuffle worker | `…/widget/` |
 | Jetpack Compose UI and themes | `…/ui/` |
 | CI demo driver (preview build only) | `app/src/preview/` |

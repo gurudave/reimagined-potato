@@ -81,7 +81,6 @@ import app.glimmer.widgets.data.PhotoFilter
 import app.glimmer.widgets.data.PhotoRef
 import app.glimmer.widgets.data.PhotoStore
 import app.glimmer.widgets.data.ShuffleEvery
-import app.glimmer.widgets.data.Stickers
 import app.glimmer.widgets.data.Swatches
 import app.glimmer.widgets.data.TapAction
 import app.glimmer.widgets.data.WidgetConfig
@@ -337,18 +336,6 @@ fun EditorScreen(
                     }
                 }
 
-                Section("sticker") {
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        item { StickerTile("none", config.sticker.isEmpty(), small = true) { config = config.copy(sticker = "") } }
-                        items(Stickers) { sticker ->
-                            StickerTile(sticker, sticker == config.sticker) { config = config.copy(sticker = sticker) }
-                        }
-                    }
-                }
-
                 Section("caption") {
                     OutlinedTextField(
                         value = config.caption,
@@ -587,21 +574,5 @@ private fun FilterTile(filter: PhotoFilter, thumb: ImageBitmap?, selected: Boole
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             modifier = Modifier.padding(top = 4.dp),
         )
-    }
-}
-
-@Composable
-private fun StickerTile(sticker: String, selected: Boolean, small: Boolean = false, onClick: () -> Unit) {
-    val vibe = LocalVibe.current
-    Box(
-        Modifier
-            .size(52.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(if (selected) vibe.soft else vibe.surface)
-            .border(if (selected) 2.5.dp else 1.5.dp, if (selected) vibe.primary else vibe.soft, RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(sticker, fontSize = if (small) 12.sp else 24.sp, fontWeight = FontWeight.Bold, color = vibe.ink)
     }
 }

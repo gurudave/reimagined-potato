@@ -29,7 +29,7 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
- * Draws a whole widget (frame, photo, filter, caption, sticker) into a single bitmap.
+ * Draws a whole widget (frame, photo, filter, caption) into a single bitmap.
  * The same code renders the home-screen widget and every preview inside the app, so what
  * she designs is exactly what she gets.
  */
@@ -95,7 +95,6 @@ object WidgetRenderer {
         if (config.caption.isNotBlank()) drawCaption(context, canvas, config, box, photoRect, unit)
         canvas.restore()
 
-        if (config.sticker.isNotEmpty()) drawSticker(canvas, config.sticker, box, unit, w, h)
         return bitmap
     }
 
@@ -211,21 +210,6 @@ object WidgetRenderer {
             else -> 0.88f
         }
         canvas.drawText(text, photoRect.centerX(), photoRect.top + photoRect.height() * baseline, paint)
-    }
-
-    private fun drawSticker(canvas: Canvas, sticker: String, box: RectF, unit: Float, w: Int, h: Int) {
-        val size = unit * 0.24f
-        val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-            textSize = size
-            textAlign = Paint.Align.CENTER
-            setShadowLayer(unit * 0.015f, 0f, unit * 0.006f, 0x33000000)
-        }
-        val cx = (box.right - size * 0.28f).coerceAtMost(w - size * 0.6f)
-        val cy = (box.top + size * 0.25f).coerceIn(size * 0.6f, h - size * 0.6f)
-        canvas.save()
-        canvas.rotate(14f, cx, cy)
-        canvas.drawText(sticker, cx, cy - (paint.ascent() + paint.descent()) / 2f, paint)
-        canvas.restore()
     }
 
     private fun fitText(paint: TextPaint, text: String, maxWidth: Float, startSize: Float) {

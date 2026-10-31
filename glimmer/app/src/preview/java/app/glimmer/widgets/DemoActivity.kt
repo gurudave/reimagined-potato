@@ -79,12 +79,12 @@ class DemoActivity : ComponentActivity() {
             return when (style % 7) {
                 0 -> WidgetConfig(
                     photos = pics(0, 1, 2), shape = FrameShape.POLAROID, filter = PhotoFilter.DREAMY,
-                    caption = "besties ♡", font = CaptionFont.HANDWRITTEN, sticker = "🎀", tilt = -4f,
+                    caption = "besties ♡", font = CaptionFont.HANDWRITTEN, tilt = -4f,
                     frameColor = 0xFFFFF5E1.toInt(),
                 )
                 1 -> WidgetConfig(
                     photos = pics(1, 0), shape = FrameShape.HEART, filter = PhotoFilter.POP,
-                    sticker = "✨", frameColor = 0xFFF9C9D6.toInt(),
+                    frameColor = 0xFFF9C9D6.toInt(),
                 )
                 2 -> WidgetConfig(
                     photos = pics(2, 3), shape = FrameShape.ARCH, filter = PhotoFilter.VINTAGE, grain = true,
@@ -92,17 +92,17 @@ class DemoActivity : ComponentActivity() {
                 )
                 3 -> WidgetConfig(
                     photos = pics(3, 0), shape = FrameShape.FLOWER, filter = PhotoFilter.GOLDEN,
-                    sticker = "🌸", frameColor = 0xFFFFE59C.toInt(),
+                    frameColor = 0xFFFFE59C.toInt(),
                 )
                 4 -> WidgetConfig(
-                    photos = pics(0), shape = FrameShape.STAMP, filter = PhotoFilter.FROST, sticker = "🦋", tilt = 4f,
+                    photos = pics(0), shape = FrameShape.STAMP, filter = PhotoFilter.FROST, tilt = 4f,
                 )
                 5 -> WidgetConfig(
                     photos = pics(3), shape = FrameShape.CIRCLE, filter = PhotoFilter.NOIR,
                     caption = "main character", font = CaptionFont.CLASSY, frameColor = 0xFF1F1B26.toInt(),
                 )
                 else -> WidgetConfig(
-                    photos = pics(2), shape = FrameShape.SOFT, caption = "us ♡", font = CaptionFont.BUBBLY, sticker = "🍓",
+                    photos = pics(2), shape = FrameShape.SOFT, caption = "us ♡", font = CaptionFont.BUBBLY,
                 )
             }
         }

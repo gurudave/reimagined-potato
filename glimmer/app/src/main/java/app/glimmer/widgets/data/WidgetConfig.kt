@@ -66,9 +66,6 @@ val Swatches = listOf(
     Swatch("ink", 0xFF1F1B26.toInt()),
 )
 
-/** Emoji old enough to render on every Android 9+ phone. */
-val Stickers = listOf("🎀", "✨", "💗", "🌸", "🦋", "🍓", "🍒", "⭐", "🌙", "🧸", "☁️", "🐚")
-
 /** One photo plus how it is framed: the point to keep centred and how far to zoom in. */
 data class PhotoRef(
     val file: String,
@@ -83,7 +80,6 @@ data class WidgetConfig(
     val filter: PhotoFilter = PhotoFilter.NONE,
     /** Outline colour for shapes, paper colour for cards; null means no outline / white paper. */
     val frameColor: Int? = null,
-    val sticker: String = "",
     val caption: String = "",
     val font: CaptionFont = CaptionFont.HANDWRITTEN,
     /** Null picks a readable colour automatically. */
@@ -118,7 +114,6 @@ data class WidgetConfig(
         shape = FrameShape.entries.random(random),
         filter = PhotoFilter.entries.random(random),
         frameColor = (listOf<Int?>(null) + Swatches.map { it.argb }).random(random),
-        sticker = (listOf("") + Stickers).random(random),
         font = CaptionFont.entries.random(random),
         tilt = listOf(0f, -4f, 4f).random(random),
     )
@@ -138,7 +133,6 @@ data class WidgetConfig(
         put("shape", shape.name)
         put("filter", filter.name)
         frameColor?.let { put("frameColor", it) }
-        put("sticker", sticker)
         put("caption", caption)
         put("font", font.name)
         captionColor?.let { put("captionColor", it) }
@@ -170,7 +164,6 @@ data class WidgetConfig(
                 shape = enumOr(o.optString("shape"), FrameShape.SOFT),
                 filter = enumOr(o.optString("filter"), PhotoFilter.NONE),
                 frameColor = if (o.has("frameColor")) o.getInt("frameColor") else null,
-                sticker = o.optString("sticker", ""),
                 caption = o.optString("caption", ""),
                 font = enumOr(o.optString("font"), CaptionFont.HANDWRITTEN),
                 captionColor = if (o.has("captionColor")) o.getInt("captionColor") else null,

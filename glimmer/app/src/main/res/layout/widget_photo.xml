@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Everything pretty (shape, filter, caption, sticker) is baked into one bitmap,
+<!-- Everything pretty (shape, filter, caption) is baked into one bitmap,
      so the widget itself is just an image that keeps its aspect ratio. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
